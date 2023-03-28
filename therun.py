@@ -6,6 +6,10 @@ from functools import cmp_to_key
 API = "https://therun.gg/api/live"
 
 
+def log(msg):
+    print(f"[LOG]: {msg}")
+
+
 def get_split_idx(player):
     for i in range(len(player["splits"]) - 1, -1, -1):
         curr_split = player["splits"][i]["splitTime"]
@@ -50,9 +54,11 @@ def ms_to_time(ms):
 
 
 async def get_run_embed(pace, min_split, only_live, min_split_thold):
-    if pace["hasReset"] or pace["currentSplitIndex"] < min_split or pace["splits"][min_split - 1]["splitTime"] > min_split_thold:
+    if pace["hasReset"] or pace["currentSplitIndex"] < min_split or (min_split_thold != -1 and pace["splits"][min_split - 1]["splitTime"] > min_split_thold):
+        log(f"{pace['user']} pace found, but did not meet minimum requirements")
         return None
     if only_live and not pace["currentlyStreaming"]:
+        log(f"{pace['user']} pace found, but is not live")
         return None
 
     twitch_username = pace['user']

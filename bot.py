@@ -26,7 +26,6 @@ class PacepalClient(discord.Client):
             await self.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=settings["watching-msg"]))
 
         print(f'Logged in as {self.user} (ID: {self.user.id})')
-        print('------')
 
     def is_me(self, msg):
         return msg.author == self.user
@@ -39,6 +38,7 @@ class PacepalClient(discord.Client):
         await self.wait_until_ready()
         channel = self.get_channel(self.channel_id)
         while not self.is_closed():
+            print("------")
             all_pace = therun.get_all_pace(settings["game"])
             embeds = []
             for pace in all_pace:
