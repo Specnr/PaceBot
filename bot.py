@@ -42,7 +42,7 @@ class PacepalClient(discord.Client):
             all_pace = therun.get_all_pace(settings["game"])
             embeds = []
             for pace in all_pace:
-                pace_embed = await therun.get_run_embed(pace, settings["minimum-split"], settings["only-show-live"])
+                pace_embed = await therun.get_run_embed(pace, settings["minimum-split"], settings["only-show-live"], settings["minimum-split-threshold"])
                 if pace_embed is not None:
                     embeds.append(pace_embed)
             await self.wipe_old_pace()
