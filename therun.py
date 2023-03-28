@@ -50,7 +50,7 @@ def ms_to_time(ms):
 
 
 async def get_run_embed(pace, min_split, only_live, min_split_thold):
-    if pace["hasReset"] or pace["currentSplitIndex"] < min_split or pace["splits"][min_split]["splitTime"] < min_split_thold:
+    if pace["hasReset"] or pace["currentSplitIndex"] < min_split or pace["splits"][min_split - 1]["splitTime"] < min_split_thold:
         return None
     if only_live and not pace["currentlyStreaming"]:
         return None
