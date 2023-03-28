@@ -57,7 +57,7 @@ async def get_run_embed(pace, min_split, only_live):
 
     twitch_username = pace['user']
     embed_msg = discord.Embed(title=twitch_username,
-                              url=f"https://twitch.tv/{twitch_username}",
+                              url=f"https://twitch.tv/{twitch_username}" if pace["currentlyStreaming"] else None,
                               color=discord.Color.purple())
     pfp_url = await twitch.get_pfp(twitch_username)
     embed_msg.set_thumbnail(url=pfp_url)
