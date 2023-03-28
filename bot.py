@@ -22,6 +22,9 @@ class PacepalClient(discord.Client):
         self.bg_task = self.loop.create_task(self.my_background_task())
 
     async def on_ready(self):
+        if settings["watching-msg"] != "":
+            await self.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=settings["watching-msg"]))
+
         print(f'Logged in as {self.user} (ID: {self.user.id})')
         print('------')
 
@@ -48,5 +51,6 @@ class PacepalClient(discord.Client):
             if len(embeds) == 0:
                 await channel.send(settings["no-pace-msg"])
             await asyncio.sleep(self.run_every)
+
 client = PacepalClient(intents=discord.Intents.default())
 client.run(os.getenv('DISCORD_SECRET'))
