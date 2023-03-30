@@ -11,9 +11,14 @@ with open("config.json") as f:
     settings = json.load(f)
 
 
+def log(msg):
+    print(f"[LOG]: {msg}")
+
+
 class PacepalClient(discord.Client):
     run_every = settings["update-frequency"]
     channel_id = settings["output-channel-id"]
+    prev_paces = []
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -40,16 +45,23 @@ class PacepalClient(discord.Client):
         while not self.is_closed():
             print("------")
             all_pace = therun.get_all_pace(settings["game"])
+
             embeds = []
+            displayed_pace = []
             for pace in all_pace:
-                pace_embed = await therun.get_run_embed(pace, settings["minimum-split"], settings["only-show-live"], settings["minimum-split-threshold"])
+                pace_embed = await therun.get_run_embed(pace, settings)
                 if pace_embed is not None:
                     embeds.append(pace_embed)
-            await self.wipe_old_pace()
-            for embed in embeds:
-                await channel.send(embed=embed)
-            if len(embeds) == 0:
-                await channel.send(settings["no-pace-msg"])
+                    displayed_pace.append(pace)
+            if displayed_pace != self.prev_paces:
+                await self.wipe_old_pace()
+                for embed in embeds:
+                    await channel.send(embed=embed)
+                if len(embeds) == 0:
+                    await channel.send(settings["no-pace-msg"])
+                self.prev_paces = displayed_pace
+            else:
+                log("Skipping update because pace was unchanged")
             await asyncio.sleep(self.run_every)
 
 client = PacepalClient(intents=discord.Intents.default())

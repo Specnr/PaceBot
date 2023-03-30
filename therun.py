@@ -53,7 +53,9 @@ def ms_to_time(ms):
     return f"{m_pref}{m}:{pref}{s}"
 
 
-async def get_run_embed(pace, min_split, only_live, min_split_thold):
+async def get_run_embed(pace, settings):
+    min_split, only_live, min_split_thold = settings["minimum-split"], settings["only-show-live"], settings["minimum-split-threshold"]
+
     if pace["hasReset"] or pace["currentSplitIndex"] < min_split or (min_split_thold != -1 and pace["splits"][min_split - 1]["splitTime"] > min_split_thold):
         log(f"{pace['user']} pace found, but did not meet minimum requirements")
         return None
@@ -61,10 +63,11 @@ async def get_run_embed(pace, min_split, only_live, min_split_thold):
         log(f"{pace['user']} pace found, but is not live")
         return None
 
+    colour_idx = pace["currentSplitIndex"] - 1 if pace["currentSplitIndex"] - 1 >= 0 and pace["currentSplitIndex"] - 1 < len(settings["split-colours"]) else 0
     twitch_username = pace['user']
     embed_msg = discord.Embed(title=twitch_username,
                               url=f"https://twitch.tv/{twitch_username}" if pace["currentlyStreaming"] else None,
-                              color=discord.Color.purple())
+                              color=discord.Color.from_str(settings["split-colours"][colour_idx]))
     pfp_url = await twitch.get_pfp(twitch_username)
     embed_msg.set_thumbnail(url=pfp_url)
     embed_msg.set_footer(text=f"Current Time - {ms_to_time(pace['currentTime'])}")
