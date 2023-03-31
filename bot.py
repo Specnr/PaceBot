@@ -98,7 +98,7 @@ class PacepalClient(discord.Client):
                 for user in to_remove:
                     del self.run_storage[user]
             except Exception as e:
-                log(" - ERROR:", e)
+                log(f" - ERROR: {e}")
 
             await asyncio.sleep(self.run_every)
 
