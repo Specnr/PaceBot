@@ -56,11 +56,14 @@ class PacepalClient(discord.Client):
 
             if len(self.to_be_archived) > 0:
                 users = { p["user"] for p in all_pace }
+                to_remove = set()
                 for user in self.to_be_archived:
                     # If not in users, pace has been removed, so run is over
                     if user not in users:
                         await self.send_archived_pace(self.to_be_archived[user])
-                        del self.to_be_archived[user]
+                        to_remove.add(user)
+                for user in to_remove:
+                    del self.to_be_archived[user]
 
             if simple_pace != self.prev_paces:
                 embeds = []

@@ -13,6 +13,8 @@ def log(msg):
 def validation(pace, settings):
     min_split, only_live, min_split_thold = settings["minimum-split"], settings["only-show-live"], settings["minimum-split-threshold"]
 
+    if pace["splits"][0]["name"] != "Enter Nether":
+        return False
     if pace["hasReset"] or pace["currentSplitIndex"] < min_split or (min_split_thold != -1 and pace["splits"][min_split - 1]["splitTime"] > min_split_thold):
         log(f"{pace['user']} pace found, but did not meet minimum requirements")
         return False
