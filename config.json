@@ -1,15 +1,16 @@
 {
   "game": "Minecraft: Java Edition",
   "output-channel-id": 1090075002843439165,
+  "archive-channel-id": 1091357260820787230,
   "no-pace-msg": "No one currently on pace... <:PaceMan:1090266847754063973>",
   "update-frequency": 15,
   "minimum-split": 1,
-  "minimum-split-threshold": -1, 
+  "minimum-split-threshold": -1,
   "only-show-live": false,
   "watching-msg": "World Record...",
   "split-colours": [
     "#db291d",
-    "#1f1f1f",
+    "#9F2B68",
     "#5c0600",
     "#b3afaf",
     "#d9941c",

@@ -23,6 +23,21 @@ def validation(pace, settings):
     return True
 
 
+def can_run_be_archived(pace):
+    limits = [
+        (2, 360000),
+        (3, 510000),
+        (4, 540000),
+        (5, 660000)
+    ]
+
+    for idx, limit in limits:
+        if pace["splits"][idx]["splitTime"] is None:
+            return False
+        if pace["splits"][idx]["splitTime"] < limit:
+            return True
+    return False
+
 def simplify_pace(paces):
     return [{"user": p["user"], "currentSplitIndex": p["currentSplitIndex"]} for p in paces]
 
@@ -68,6 +83,19 @@ def ms_to_time(ms):
     pref = "0" if s < 10 else ""
     m_pref = "0" if m < 10 else ""
     return f"{m_pref}{m}:{pref}{s}"
+
+
+def get_archive_run_msg(pace):
+    twitch_username = pace['user']
+    best_split = pace['splits'][pace['currentSplitIndex'] - 1]
+    msg = f"**{twitch_username}**\n"
+    msg += f"{best_split['name']} @ {ms_to_time(best_split['splitTime'])}\n>>> "
+    for split in pace["splits"]:
+        s_time, s_name = split["splitTime"], split["name"]
+        if s_time is None:
+            break
+        msg += f"**{ms_to_time(s_time)}** {s_name}\n"
+    return msg
 
 
 async def get_run_embed(pace, settings):
