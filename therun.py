@@ -22,7 +22,7 @@ def validation(pace, settings, run_storage):
     if only_live and not pace["currentlyStreaming"]:
         log(f"{pace['user']} is not live")
         return False
-    if pace["user"] in run_storage and pace["insertedAt"] != run_storage[pace["user"]]["insertedAt"] and pace["splits"] == run_storage["user"]["splits"]:
+    if pace["user"] in run_storage and pace["insertedAt"] != run_storage[pace["user"]]["insertedAt"] and pace["splits"] == run_storage[pace["user"]]["splits"]:
         log(f"{pace['user']}'s pace is a dupe and will be ignored")
         return False
     
