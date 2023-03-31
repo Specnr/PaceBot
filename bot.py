@@ -44,22 +44,20 @@ class PacepalClient(discord.Client):
         channel = self.get_channel(self.channel_id)
         while not self.is_closed():
             print("------")
-            all_pace = therun.get_all_pace(settings["game"])
-
-            embeds = []
-            displayed_pace = []
-            for pace in all_pace:
-                pace_embed = await therun.get_run_embed(pace, settings)
-                if pace_embed is not None:
-                    embeds.append(pace_embed)
-                    displayed_pace.append(pace)
-            if displayed_pace != self.prev_paces:
+            all_pace = therun.get_all_pace(settings["game"], settings)
+            simple_pace = therun.simplify_pace(all_pace)
+            if simple_pace != self.prev_paces:
+                embeds = []
+                for pace in all_pace:
+                    pace_embed = await therun.get_run_embed(pace, settings)
+                    if pace_embed is not None:
+                        embeds.append(pace_embed)
                 await self.wipe_old_pace()
                 for embed in embeds:
                     await channel.send(embed=embed)
                 if len(embeds) == 0:
                     await channel.send(settings["no-pace-msg"])
-                self.prev_paces = displayed_pace
+                self.prev_paces = simple_pace
             else:
                 log("Skipping update because pace was unchanged")
             await asyncio.sleep(self.run_every)

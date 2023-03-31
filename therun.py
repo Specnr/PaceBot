@@ -10,6 +10,23 @@ def log(msg):
     print(f"[LOG]: {msg}")
 
 
+def validation(pace, settings):
+    min_split, only_live, min_split_thold = settings["minimum-split"], settings["only-show-live"], settings["minimum-split-threshold"]
+
+    if pace["hasReset"] or pace["currentSplitIndex"] < min_split or (min_split_thold != -1 and pace["splits"][min_split - 1]["splitTime"] > min_split_thold):
+        log(f"{pace['user']} pace found, but did not meet minimum requirements")
+        return False
+    if only_live and not pace["currentlyStreaming"]:
+        log(f"{pace['user']} pace found, but is not live")
+        return False
+    
+    return True
+
+
+def simplify_pace(paces):
+    return [{"user": p["user"], "currentSplitIndex": p["currentSplitIndex"]} for p in paces]
+
+
 def get_split_idx(player):
     for i in range(len(player["splits"]) - 1, -1, -1):
         curr_split = player["splits"][i]["splitTime"]
@@ -36,9 +53,9 @@ def compare_pace(p1, p2):
     return 0
 
 
-def get_all_pace(game):
+def get_all_pace(game, settings):
     data = requests.get(API).json()
-    filtered = filter(lambda x: x["game"] == game, data)
+    filtered = filter(lambda x: x["game"] == game and validation(x, settings), data)
     return sorted(list(filtered), key=cmp_to_key(compare_pace))
 
 
@@ -54,15 +71,6 @@ def ms_to_time(ms):
 
 
 async def get_run_embed(pace, settings):
-    min_split, only_live, min_split_thold = settings["minimum-split"], settings["only-show-live"], settings["minimum-split-threshold"]
-
-    if pace["hasReset"] or pace["currentSplitIndex"] < min_split or (min_split_thold != -1 and pace["splits"][min_split - 1]["splitTime"] > min_split_thold):
-        log(f"{pace['user']} pace found, but did not meet minimum requirements")
-        return None
-    if only_live and not pace["currentlyStreaming"]:
-        log(f"{pace['user']} pace found, but is not live")
-        return None
-
     colour_idx = pace["currentSplitIndex"] - 1 if pace["currentSplitIndex"] - 1 >= 0 and pace["currentSplitIndex"] - 1 < len(settings["split-colours"]) else 0
     twitch_username = pace['user']
     embed_msg = discord.Embed(title=twitch_username,
