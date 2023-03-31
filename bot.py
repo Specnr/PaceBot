@@ -2,6 +2,7 @@ import os
 import discord
 import asyncio
 import json
+from datetime import datetime
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -21,6 +22,7 @@ class PacepalClient(discord.Client):
     archive_channel_id = settings["archive-channel-id"]
     prev_paces = [None]
     to_be_archived = {}
+    run_storage = {}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -51,7 +53,7 @@ class PacepalClient(discord.Client):
         channel = self.get_channel(self.channel_id)
         while not self.is_closed():
             print("------")
-            all_pace = therun.get_all_pace(settings["game"], settings)
+            all_pace = therun.get_all_pace(settings["game"], settings, self.run_storage)
             simple_pace = therun.simplify_pace(all_pace)
 
             if len(self.to_be_archived) > 0:
@@ -68,6 +70,7 @@ class PacepalClient(discord.Client):
             if simple_pace != self.prev_paces:
                 embeds = []
                 for pace in all_pace:
+                    self.run_storage[pace["user"]] = therun.get_storeable_run(pace)
                     if therun.can_run_be_archived(pace):
                         log(f"{pace['user']} achieved good pace and will be archived")
                         self.to_be_archived[pace["user"]] = pace
@@ -84,6 +87,15 @@ class PacepalClient(discord.Client):
                 self.prev_paces = simple_pace 
             else:
                 log("Skipping update because pace was unchanged")
+
+            to_remove = set()
+            for user in self.run_storage:
+                run_dt = datetime.fromtimestamp(self.run_storage[user]["insertedAt"]/1000.0)
+                diff = datetime.utcnow() - run_dt
+                if diff.seconds > 3600:
+                    to_remove.add(user)
+            for user in to_remove:
+                del self.run_storage[user]
 
             await asyncio.sleep(self.run_every)
 

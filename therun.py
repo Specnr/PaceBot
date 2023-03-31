@@ -10,16 +10,20 @@ def log(msg):
     print(f"[LOG]: {msg}")
 
 
-def validation(pace, settings):
+def validation(pace, settings, run_storage):
     min_split, only_live, min_split_thold = settings["minimum-split"], settings["only-show-live"], settings["minimum-split-threshold"]
 
     if pace["splits"][0]["name"] != "Enter Nether":
+        log(f"{pace['user']} is not playing 1.16.1")
         return False
     if pace["hasReset"] or pace["currentSplitIndex"] < min_split or (min_split_thold != -1 and pace["splits"][min_split - 1]["splitTime"] > min_split_thold):
-        log(f"{pace['user']} pace found, but did not meet minimum requirements")
+        log(f"{pace['user']} pace did not meet minimum requirements")
         return False
     if only_live and not pace["currentlyStreaming"]:
-        log(f"{pace['user']} pace found, but is not live")
+        log(f"{pace['user']} is not live")
+        return False
+    if pace["user"] in run_storage and pace["insertedAt"] != run_storage[pace["user"]]["insertedAt"] and pace["splits"] == run_storage["user"]["splits"]:
+        log(f"{pace['user']}'s pace is a dupe and will be ignored")
         return False
     
     return True
@@ -42,6 +46,10 @@ def can_run_be_archived(pace):
 
 def simplify_pace(paces):
     return [{"user": p["user"], "currentSplitIndex": p["currentSplitIndex"]} for p in paces]
+
+
+def get_storeable_run(pace):
+    return {"insertedAt": pace["insertedAt"], "splits": pace["splits"]}
 
 
 def get_split_idx(player):
@@ -70,9 +78,9 @@ def compare_pace(p1, p2):
     return 0
 
 
-def get_all_pace(game, settings):
+def get_all_pace(game, settings, run_storage):
     data = requests.get(API).json()
-    filtered = filter(lambda x: x["game"] == game and validation(x, settings), data)
+    filtered = filter(lambda x: x["game"] == game and validation(x, settings, run_storage), data)
     return sorted(list(filtered), key=cmp_to_key(compare_pace))
 
 
