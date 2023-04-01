@@ -53,7 +53,12 @@ class PacepalClient(discord.Client):
         channel = self.get_channel(self.channel_id)
         while not self.is_closed():
             print("------")
-            all_pace = therun.get_all_pace(settings["game"], settings, self.run_storage)
+            try:
+                all_pace = therun.get_all_pace(settings["game"], settings, self.run_storage)
+            except:
+                log(f"Read failed, retrying in {self.run_every}s")
+                await asyncio.sleep(self.run_every)
+                continue
             simple_pace = therun.simplify_pace(all_pace)
 
             if len(self.to_be_archived) > 0:
