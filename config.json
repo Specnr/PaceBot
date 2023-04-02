@@ -1,7 +1,7 @@
 {
   "game": "Minecraft: Java Edition",
   "output-channel-id": 1090075002843439165,
-  "archive-channel-id": 1091357260820787230,
+  "archive-channel-id": -1,
   "no-pace-msg": "No one currently on pace... <:PaceMan:1090266847754063973>",
   "update-frequency": 15,
   "minimum-split": 1,

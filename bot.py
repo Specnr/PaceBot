@@ -61,7 +61,7 @@ class PacepalClient(discord.Client):
                 continue
             simple_pace = therun.simplify_pace(all_pace)
 
-            if len(self.to_be_archived) > 0:
+            if self.archive_channel_id != -1 and len(self.to_be_archived) > 0:
                 users = { p["user"] for p in all_pace }
                 to_remove = set()
                 for user in self.to_be_archived:
@@ -75,10 +75,11 @@ class PacepalClient(discord.Client):
             if simple_pace != self.prev_paces:
                 embeds = []
                 for pace in all_pace:
-                    self.run_storage[pace["user"]] = therun.get_storeable_run(pace)
-                    if therun.can_run_be_archived(pace):
-                        log(f"{pace['user']} achieved good pace and will be archived")
-                        self.to_be_archived[pace["user"]] = pace
+                    if self.archive_channel_id != -1:
+                        self.run_storage[pace["user"]] = therun.get_storeable_run(pace)
+                        if therun.can_run_be_archived(pace):
+                            log(f"{pace['user']} achieved good pace and will be archived")
+                            self.to_be_archived[pace["user"]] = pace
 
                     pace_embed = await therun.get_run_embed(pace, settings)
                     if pace_embed is not None:
@@ -93,14 +94,15 @@ class PacepalClient(discord.Client):
             else:
                 log("Skipping update because pace was unchanged")
 
-            to_remove = set()
-            for user in self.run_storage:
-                run_dt = datetime.fromtimestamp(self.run_storage[user]["insertedAt"]/1000.0)
-                diff = datetime.utcnow() - run_dt
-                if diff.seconds > 3600:
-                    to_remove.add(user)
-            for user in to_remove:
-                del self.run_storage[user]
+            if self.archive_channel_id != -1:
+                to_remove = set()
+                for user in self.run_storage:
+                    run_dt = datetime.fromtimestamp(self.run_storage[user]["insertedAt"]/1000.0)
+                    diff = datetime.utcnow() - run_dt
+                    if diff.seconds > 3600:
+                        to_remove.add(user)
+                for user in to_remove:
+                    del self.run_storage[user]
 
             await asyncio.sleep(self.run_every)
 
