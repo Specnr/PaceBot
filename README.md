@@ -13,8 +13,9 @@ Currently the bot is setup in [my personal server](https://discord.com/invite/tX
 To use this bot you must clone this repo, then update the `config.json` file's variables to your liking.
 
 When hosting you also need to setup some environment variables:
-- `DISCORD_SECRET`: Your Discord bot's auth token
-- `TWITCH_CLIENT`: Your Twitch app client id
-- `TWITCH_SECRET`: Your Twitch app secret token
+- `DISCORD_SECRET`: Discord bot's auth token
+- `TWITCH_CLIENT`: Twitch app client id
+- `TWITCH_SECRET`: Twitch app secret token
+- `MONGO_URI`: Mongo cluster URI
 
 Feel free to DM me if you have any questions: Specnr#9012
