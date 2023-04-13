@@ -31,9 +31,6 @@ class PacepalClient(discord.Client):
         self.bg_task = self.loop.create_task(self.send_pace())
 
     async def on_ready(self):
-        if settings["watching-msg"] != "":
-            await self.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=settings["watching-msg"]))
-
         print(f'Logged in as {self.user} (ID: {self.user.id})')
 
     def is_me(self, msg):
@@ -54,13 +51,15 @@ class PacepalClient(discord.Client):
         while not self.is_closed():
             print("------")
             try:
-                all_pace = therun.get_all_pace(settings["game"], settings, self.run_storage)
-            except:
+                all_pace, raw_count = therun.get_all_pace(settings["game"], settings, self.run_storage)
+            except Exception as e:
+                print(e)
                 log(f"Read failed, retrying in {self.run_every}s")
                 await asyncio.sleep(self.run_every)
                 continue
             simple_pace = therun.simplify_pace(all_pace)
 
+            await self.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=f"{raw_count} Players"))
             if self.archive_channel_id != -1 and len(self.to_be_archived) > 0:
                 users = { p["user"] for p in all_pace }
                 to_remove = set()

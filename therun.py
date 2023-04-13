@@ -80,8 +80,10 @@ def compare_pace(p1, p2):
 
 def get_all_pace(game, settings, run_storage):
     data = requests.get(API).json()
-    filtered = filter(lambda x: x["game"] == game and validation(x, settings, run_storage), data)
-    return sorted(list(filtered), key=cmp_to_key(compare_pace))
+    filtered = list(filter(lambda x: x["game"] == game, data))
+    raw_count = len(filtered)
+    filtered = list(filter(lambda x: validation(x, settings, run_storage), filtered))
+    return sorted(filtered, key=cmp_to_key(compare_pace)), raw_count
 
 
 def ms_to_time(ms):

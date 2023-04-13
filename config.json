@@ -7,7 +7,6 @@
   "minimum-split": 1,
   "minimum-split-threshold": -1,
   "only-show-live": false,
-  "watching-msg": "World Record...",
   "split-colours": [
     "#db291d",
     "#9F2B68",
