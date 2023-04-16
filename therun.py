@@ -16,6 +16,15 @@ def validation(pace, settings, run_storage):
     if pace["splits"][0]["name"] != "Enter Nether":
         log(f"{pace['user']} is not playing 1.16.1")
         return False
+    
+    found = False
+    for split in pace["splits"]:
+        if split["name"] == "Blind Travel":
+            found = True
+    if not found:
+        log(f"{pace['user']} is playing on outdated SpeedrunIGT")
+        return False
+
     if pace["hasReset"] or pace["currentSplitIndex"] < min_split or (min_split_thold != -1 and pace["splits"][min_split - 1]["splitTime"] > min_split_thold):
         log(f"{pace['user']} pace did not meet minimum requirements")
         return False
