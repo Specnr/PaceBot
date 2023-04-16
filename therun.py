@@ -41,17 +41,18 @@ def validation(pace, settings, run_storage):
 def can_run_be_archived(pace):
     limits = [
         (2, 360000),
-        (3, 510000),
-        (4, 540000),
-        (5, 660000)
+        (3, 420000),
+        (4, 510000),
+        (5, 540000),
+        (6, 660000)
     ]
 
     for idx, limit in limits:
         if pace["splits"][idx]["splitTime"] is None:
-            return False
+            return -1
         if pace["splits"][idx]["splitTime"] < limit:
-            return True
-    return False
+            return idx
+    return -1
 
 def simplify_pace(paces):
     return [{"user": p["user"], "currentSplitIndex": p["currentSplitIndex"]} for p in paces]
@@ -108,7 +109,8 @@ def ms_to_time(ms):
 
 def get_archive_run_msg(pace):
     twitch_username = pace['user']
-    best_split = pace['splits'][pace['currentSplitIndex'] - 1]
+    pace_idx = can_run_be_archived(pace)
+    best_split = pace['splits'][pace_idx]
     msg = f"**{twitch_username}**\n"
     msg += f"{best_split['name']} @ {ms_to_time(best_split['splitTime'])}\n>>> "
     for split in pace["splits"]:

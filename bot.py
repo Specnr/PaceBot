@@ -76,7 +76,7 @@ class PacepalClient(discord.Client):
                 for pace in all_pace:
                     if self.archive_channel_id != -1:
                         self.run_storage[pace["user"]] = therun.get_storeable_run(pace)
-                        if therun.can_run_be_archived(pace):
+                        if therun.can_run_be_archived(pace) > -1:
                             log(f"{pace['user']} achieved good pace and will be archived")
                             self.to_be_archived[pace["user"]] = pace
 
