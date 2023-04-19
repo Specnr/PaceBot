@@ -89,7 +89,12 @@ def compare_pace(p1, p2):
 
 
 def get_all_pace(game, settings, run_storage):
-    data = requests.get(API).json()
+    while True:
+        try:
+            data = requests.get(API, timeout=30).json()
+            break
+        except requests.exceptions.Timeout:
+            log("Request timed out, will try again...")
     filtered = list(filter(lambda x: x["game"] == game, data))
     raw_count = len(filtered)
     filtered = list(filter(lambda x: validation(x, settings, run_storage), filtered))
