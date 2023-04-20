@@ -40,7 +40,7 @@ def validation(pace, settings, run_storage):
 
 def can_run_be_archived(pace):
     limits = [
-        (2, 360000),
+        (2, 300000),
         (3, 420000),
         (4, 510000),
         (5, 540000),
