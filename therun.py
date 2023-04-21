@@ -25,7 +25,8 @@ def validation(pace, settings, run_storage):
         log(f"{pace['user']} is playing on outdated SpeedrunIGT")
         return False
 
-    if pace["hasReset"] or pace["currentSplitIndex"] < min_split or (min_split_thold != -1 and pace["splits"][min_split - 1]["splitTime"] > min_split_thold):
+    invalidSplit = pace["currentSplitIndex"] < min_split or pace["splits"][min_split - 1]["splitTime"] is None
+    if pace["hasReset"] or invalidSplit or (min_split_thold != -1 and pace["splits"][min_split - 1]["splitTime"] > min_split_thold):
         log(f"{pace['user']} pace did not meet minimum requirements")
         return False
     if only_live and not pace["currentlyStreaming"]:
