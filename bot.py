@@ -44,9 +44,11 @@ async def wipe_old_pace():
 
 
 async def update_msgs():
+    global TIME_SINCE_UPDATED
     global HAVE_RUNS_CHANGES
     if not HAVE_RUNS_CHANGES:
         log("Skipping update since no changes were made")
+        TIME_SINCE_UPDATED = datetime.now()
         return
     
     log("Updating pace messages")
@@ -58,9 +60,11 @@ async def update_msgs():
     await wipe_old_pace()
     if len(sorted_pace) == 0:
         await channel.send(settings["no-pace-msg"])
+        TIME_SINCE_UPDATED = datetime.now()
         return
     for embed in embeds:
         await channel.send(embed=embed)
+    TIME_SINCE_UPDATED = datetime.now()
 
 
 async def on_message(msg):
@@ -93,10 +97,13 @@ async def on_message(msg):
             HAVE_RUNS_CHANGES = False
 
     ACTIVE_RUNS[msg_json["user"]] = msg_json["run"]
+    
+    # Force update if the run is good
+    if therun.can_run_be_archived(msg_json["run"]) != -1:
+        await update_msgs()
 
 
 async def listen():
-    global TIME_SINCE_UPDATED
     WS_ENDPOINT = "wss://fh76djw1t9.execute-api.eu-west-1.amazonaws.com/prod"
     await client.wait_until_ready()
     await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="World Record"))
@@ -106,7 +113,6 @@ async def listen():
             await on_message(msg)
             if TIME_SINCE_UPDATED == -1 or (datetime.now() - TIME_SINCE_UPDATED).total_seconds() > settings["update-frequency"]:
                 await update_msgs()
-                TIME_SINCE_UPDATED = datetime.now()
 
 
 async def start():
