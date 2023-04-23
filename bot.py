@@ -12,16 +12,12 @@ load_dotenv()
 
 client = discord.Client(intents=discord.Intents.default())
 ACTIVE_RUNS = {}
-FIRST_MSG = True
 HAVE_RUNS_CHANGES = True
 TIME_SINCE_UPDATED = -1
 
 settings = {}
 with open("config.json") as f:
     settings = json.load(f)
-
-if os.path.exists("log.log"):
-    os.remove("log.log")
 
 
 @client.event
@@ -31,13 +27,6 @@ async def on_ready():
     
 def log(msg):
     print(f"[LOG]: {msg}")
-
-
-async def send_no_pace_msg():
-    channel = client.get_channel(settings["output-channel-id"])
-    global FIRST_MSG
-    FIRST_MSG = False
-    await channel.send(settings["no-pace-msg"])
 
 
 async def send_archive_msg(user):
@@ -68,7 +57,7 @@ async def update_msgs():
     channel = client.get_channel(settings["output-channel-id"])
     await wipe_old_pace()
     if len(sorted_pace) == 0:
-        await send_no_pace_msg()
+        await channel.send(settings["no-pace-msg"])
         return
     for embed in embeds:
         await channel.send(embed=embed)
