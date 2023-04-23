@@ -99,6 +99,7 @@ async def listen():
     global TIME_SINCE_UPDATED
     WS_ENDPOINT = "wss://fh76djw1t9.execute-api.eu-west-1.amazonaws.com/prod"
     await client.wait_until_ready()
+    await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="World Record"))
     async with websockets.connect(WS_ENDPOINT) as ws:
         while True:
             msg = await ws.recv()
