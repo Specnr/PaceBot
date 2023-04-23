@@ -30,7 +30,7 @@ def log(msg):
 
 
 async def send_archive_msg(user):
-    if settings["archive-channel-id"] == -1 or therun.can_run_be_archived() == -1:
+    if settings["archive-channel-id"] == -1 or therun.can_run_be_archived(ACTIVE_RUNS[user]) == -1:
         return
     channel = client.get_channel(settings["archive-channel-id"])
     msg = therun.get_archive_run_msg(ACTIVE_RUNS[user])
