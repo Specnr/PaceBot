@@ -107,15 +107,14 @@ async def listen():
     WS_ENDPOINT = "wss://fh76djw1t9.execute-api.eu-west-1.amazonaws.com/prod"
     await client.wait_until_ready()
     await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="World Record"))
-    async with websockets.connect(WS_ENDPOINT) as ws:
-        while True:
-            try:
-                msg = await ws.recv()
-                await on_message(msg)
-                if TIME_SINCE_UPDATED == -1 or (datetime.now() - TIME_SINCE_UPDATED).total_seconds() > settings["update-frequency"]:
-                    await update_msgs()
-            except websockets.ConnectionClosed:
-                continue
+    async for ws in websockets.connect(WS_ENDPOINT):
+        try:
+            msg = await ws.recv()
+            await on_message(msg)
+            if TIME_SINCE_UPDATED == -1 or (datetime.now() - TIME_SINCE_UPDATED).total_seconds() > settings["update-frequency"]:
+                await update_msgs()
+        except websockets.ConnectionClosed:
+            continue
 
 
 async def start():
