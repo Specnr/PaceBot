@@ -11,6 +11,9 @@ DEFAULT_PFP = "https://static-cdn.jtvnw.net/user-default-pictures-uv/13e5fa74-de
 
 
 async def get_pfp(username):
-    twitch = await Twitch(CLIENT, SECRET)
-    user = await first(twitch.get_users(logins=username))
-    return user.profile_image_url if user is not None else DEFAULT_PFP
+    try:
+        twitch = await Twitch(CLIENT, SECRET)
+        user = await first(twitch.get_users(logins=username))
+        return user.profile_image_url if user is not None else DEFAULT_PFP
+    except:
+        return DEFAULT_PFP
