@@ -1,9 +1,42 @@
+import requests
 import discord
 import twitch
 from functools import cmp_to_key
 
+API = "https://therun.gg/api/live"
+
+
 def log(msg):
     print(f"[LOG]: {msg}")
+
+
+def validation(pace, settings, run_storage):
+    min_split, only_live, min_split_thold = settings["minimum-split"], settings["only-show-live"], settings["minimum-split-threshold"]
+
+    if pace["splits"][0]["name"] != "Enter Nether":
+        log(f"{pace['user']} is not playing 1.16.1")
+        return False
+    
+    found = False
+    for split in pace["splits"]:
+        if split["name"] == "Blind Travel":
+            found = True
+    if not found:
+        log(f"{pace['user']} is playing on outdated SpeedrunIGT")
+        return False
+
+    invalidSplit = pace["currentSplitIndex"] < min_split or pace["splits"][min_split - 1]["splitTime"] is None
+    if pace["hasReset"] or invalidSplit or (min_split_thold != -1 and pace["splits"][min_split - 1]["splitTime"] > min_split_thold):
+        log(f"{pace['user']} pace did not meet minimum requirements")
+        return False
+    if only_live and not pace["currentlyStreaming"]:
+        log(f"{pace['user']} is not live")
+        return False
+    if pace["user"] in run_storage and pace["insertedAt"] != run_storage[pace["user"]]["insertedAt"] and pace["splits"] == run_storage[pace["user"]]["splits"]:
+        log(f"{pace['user']}'s pace is a dupe and will be ignored")
+        return False
+    
+    return True
 
 
 def can_run_be_archived(pace):
@@ -22,72 +55,12 @@ def can_run_be_archived(pace):
             return idx
     return -1
 
-
-def get_archive_run_msg(pace):
-    twitch_username = pace['user']
-    pace_idx = can_run_be_archived(pace)
-    best_split = pace['splits'][pace_idx]
-    msg = f"**{twitch_username}**\n"
-    msg += f"{best_split['name']} @ {ms_to_time(best_split['splitTime'])}\n>>> "
-    for split in pace["splits"]:
-        s_time, s_name = split["splitTime"], split["name"]
-        if s_time is None:
-            break
-        msg += f"**{ms_to_time(s_time)}** {s_name}\n"
-    return msg
+def simplify_pace(paces):
+    return [{"user": p["user"], "currentSplitIndex": p["currentSplitIndex"]} for p in paces]
 
 
-def should_process_run(run, game, min_split, min_split_thold):
-    # Require correct game
-    if run["game"] != game:
-        return False
-    
-    # Require correct SpeedrunIGT version
-    valid = False
-    for split in run["splits"]:
-        if split["name"] == "Blind Travel":
-            valid = True
-    if not valid:
-        log(f"{run['user']} is on invalid SpeedrunIGT version")
-        return False
-    
-    invalidSplit = run["currentSplitIndex"] < min_split or run["splits"][min_split - 1]["splitTime"] is None
-    if run["hasReset"] or invalidSplit or (min_split_thold != -1 and run["splits"][min_split - 1]["splitTime"] > min_split_thold):
-        log(f"{run['user']} pace did not meet minimum requirements")
-        return False
-    
-    return True
-
-
-def ms_to_time(ms):
-    if ms is None:
-        return "0:00"
-    total_s = ms / 1000
-    m = int(total_s // 60)
-    s = int(total_s % 60)
-    pref = "0" if s < 10 else ""
-    m_pref = "0" if m < 10 else ""
-    return f"{m_pref}{m}:{pref}{s}"
-
-
-async def get_run_embed(pace, settings):
-    colour_idx = pace["currentSplitIndex"] - 1 if pace["currentSplitIndex"] - 1 >= 0 and pace["currentSplitIndex"] - 1 < len(settings["split-colours"]) else 0
-    twitch_username = pace['user']
-    embed_msg = discord.Embed(title=twitch_username,
-                              url=f"https://twitch.tv/{twitch_username}" if pace["currentlyStreaming"] else None,
-                              color=discord.Color.from_str(settings["split-colours"][colour_idx]))
-    pfp_url = await twitch.get_pfp(twitch_username)
-    embed_msg.set_thumbnail(url=pfp_url)
-    embed_msg.set_footer(text=f"Current Time - {ms_to_time(pace['currentTime'])}")
-
-    for split in pace["splits"]:
-        s_time, s_name = split["splitTime"], split["name"]
-        if s_time is None:
-            break
-        embed_msg.add_field(
-            name=f"**{ms_to_time(s_time)}** {s_name}", value="", inline=False)
-
-    return embed_msg
+def get_storeable_run(pace):
+    return {"insertedAt": pace["insertedAt"], "splits": pace["splits"]}
 
 
 def get_split_idx(player):
@@ -116,8 +89,59 @@ def compare_pace(p1, p2):
     return 0
 
 
-def generate_sorted_pace(runners_dict):
-    paces = []
-    for pace in runners_dict.values():
-        paces.append(pace)
-    return sorted(paces, key=cmp_to_key(compare_pace))
+def get_all_pace(game, settings, run_storage):
+    while True:
+        try:
+            data = requests.get(API, timeout=30).json()
+            break
+        except requests.exceptions.Timeout:
+            log("Request timed out, will try again...")
+    filtered = list(filter(lambda x: x["game"] == game, data))
+    raw_count = len(filtered)
+    filtered = list(filter(lambda x: validation(x, settings, run_storage), filtered))
+    return sorted(filtered, key=cmp_to_key(compare_pace)), raw_count
+
+
+def ms_to_time(ms):
+    if ms is None:
+        return "0:00"
+    total_s = ms / 1000
+    m = int(total_s // 60)
+    s = int(total_s % 60)
+    pref = "0" if s < 10 else ""
+    m_pref = "0" if m < 10 else ""
+    return f"{m_pref}{m}:{pref}{s}"
+
+
+def get_archive_run_msg(pace):
+    twitch_username = pace['user']
+    pace_idx = can_run_be_archived(pace)
+    best_split = pace['splits'][pace_idx]
+    msg = f"**{twitch_username}**\n"
+    msg += f"{best_split['name']} @ {ms_to_time(best_split['splitTime'])}\n>>> "
+    for split in pace["splits"]:
+        s_time, s_name = split["splitTime"], split["name"]
+        if s_time is None:
+            break
+        msg += f"**{ms_to_time(s_time)}** {s_name}\n"
+    return msg
+
+
+async def get_run_embed(pace, settings):
+    colour_idx = pace["currentSplitIndex"] - 1 if pace["currentSplitIndex"] - 1 >= 0 and pace["currentSplitIndex"] - 1 < len(settings["split-colours"]) else 0
+    twitch_username = pace['user']
+    embed_msg = discord.Embed(title=twitch_username,
+                              url=f"https://twitch.tv/{twitch_username}" if pace["currentlyStreaming"] else None,
+                              color=discord.Color.from_str(settings["split-colours"][colour_idx]))
+    pfp_url = await twitch.get_pfp(twitch_username)
+    embed_msg.set_thumbnail(url=pfp_url)
+    embed_msg.set_footer(text=f"Current Time - {ms_to_time(pace['currentTime'])}")
+
+    for split in pace["splits"]:
+        s_time, s_name = split["splitTime"], split["name"]
+        if s_time is None:
+            break
+        embed_msg.add_field(
+            name=f"**{ms_to_time(s_time)}** {s_name}", value="", inline=False)
+
+    return embed_msg
