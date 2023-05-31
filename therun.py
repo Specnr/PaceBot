@@ -128,7 +128,8 @@ def get_archive_run_msg(pace):
 
 
 async def get_run_embed(pace, settings):
-    colour_idx = pace["currentSplitIndex"] - 1 if pace["currentSplitIndex"] - 1 >= 0 and pace["currentSplitIndex"] - 1 < len(settings["split-colours"]) else 0
+    curr_split_idx = get_split_idx(pace)
+    colour_idx = curr_split_idx if curr_split_idx >= 0 and curr_split_idx < len(settings["split-colours"]) else 0
     twitch_username = pace['user']
     embed_msg = discord.Embed(title=twitch_username,
                               url=f"https://twitch.tv/{twitch_username}" if pace["currentlyStreaming"] else None,
