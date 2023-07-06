@@ -26,7 +26,7 @@ def validation(pace, settings, run_storage):
             # Ensure jank runs arent seen
             if prev["splitTime"] is not None and split["splitTime"] is not None and prev["splitTime"] > split["splitTime"]:
                 return False
-            if prev["splitTime"] is not None and split["splitTime"] is None:
+            if prev["splitTime"] is None and split["splitTime"] is not None:
                 return False
 
         if split["name"] == "Blind Travel":
