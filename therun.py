@@ -18,7 +18,17 @@ def validation(pace, settings, run_storage):
         return False
     
     found = False
+    prev = None
     for split in pace["splits"]:
+        if prev is None:
+            prev = split
+        else:
+            # Ensure jank runs arent seen
+            if prev["splitTime"] is not None and split["splitTime"] is not None and prev["splitTime"] > split["splitTime"]:
+                return False
+            if prev["splitTime"] is not None and split["splitTime"] is None:
+                return False
+
         if split["name"] == "Blind Travel":
             found = True
     if not found:
